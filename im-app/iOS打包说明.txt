@@ -1,0 +1,81 @@
+========================================
+汇语(MICHAT) iOS 打包说明
+========================================
+整理时间：2026-11-03
+当前版本：1.4.4+24（pubspec.yaml）
+Bundle ID：com.qingniao.im
+App 显示名：MICHAT
+后端地址：https://www.hchat.top（已同步到 assets/config/app_config.json）
+
+========================================
+一、本文件夹内容说明
+========================================
+这是从 Flutter 工程里整理出来的【iOS 打包自包含工程】，
+拷到你的 Mac 上即可直接编译 IPA，无需再从服务器拉取。
+
+包含：
+  ios/         —— iOS 原生工程（Runner.xcodeproj / Podfile / Info.plist 等）
+  lib/         —— Dart 业务代码
+  assets/      —— 图标、图片、声音等资源
+  config/      —— app_build.json（打包总配置）
+  packages/    —— 本地插件 tencent_trtc_cloud（腾讯云 TRTC 音视频）
+  pubspec.yaml / pubspec.lock  —— 依赖清单
+
+========================================
+二、在 Mac 上打包 IPA 的步骤
+========================================
+前置：Mac 已装 Xcode + CocoaPods + Flutter SDK
+
+1. 把本文件夹整个拷到 Mac（路径别带中文和空格，比如放 ~/im-app-ios）
+
+2. 进入目录，安装依赖：
+   cd ~/im-app-ios
+   flutter pub get
+
+3. 进入 ios 目录，装 CocoaPods 依赖：
+   cd ios
+   pod install
+   （若报权限/源错误，可先执行 pod repo update）
+
+4. 打开工程（务必用 .xcworkspace，不是 .xcodeproj）：
+   open Runner.xcworkspace
+
+5. 在 Xcode 里配置签名：
+   - 选中 Runner target → Signing & Capabilities
+   - 勾选 "Automatically manage signing"
+   - Team 选择你的 Apple 开发者账号
+   - Bundle Identifier 保持 com.qingniao.im（勿改）
+
+6. 选择真机或 "Any iOS Device (arm64)"，菜单 Product → Archive
+
+7. Archive 完成后，在 Organizer 里点 "Distribute App"：
+   - 上架 App Store → App Store Connect
+   - 内测/越狱分发 → Ad Hoc / Enterprise
+   然后导出 .ipa 文件即可。
+
+========================================
+三、注意事项（重要）
+========================================
+1. 【版本号】pubspec.yaml 目前是 1.4.4+24；
+   但 config/app_build.json 里还是 versionName=1.4.3、versionCode=17，
+   两边不一致。打包前请确认以哪个为准，并保持一致。
+
+2. 【Bundle ID 一致】iOS 签名时，Apple 开发者后台的
+   App ID / ad-hoc 描述文件必须也是 com.qingniao.im，
+   错一个字母都签不上。
+
+3. 【推送】Info.plist 已配好极光推送的 APNs 后台模式
+   (remote-notification)。若正式包要收推送，需在极光控制台
+   上传 iOS 的推送证书(.p12)，并在极光绑定 com.qingniao.im。
+
+4. 【音视频】腾讯云 TRTC（packages/tencent_trtc_cloud）已包含，
+   pod install 会一并装好。摄像头/麦克风权限已在 Info.plist 声明。
+
+5. 【ATS】Info.plist 已全局放行 http（NSAllowsArbitraryLoads=true），
+   方便 ad-hoc 内测分发。上架 App Store 前建议按需收紧为仅 HTTPS。
+
+========================================
+四、Android(APK) 与 iOS 版本同步约定
+========================================
+以后每次改代码或打 APK 时，iOS 的 lib/、assets/、config/
+会一并同步到这个文件夹，保证两端代码一致。
