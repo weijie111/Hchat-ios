@@ -57,8 +57,8 @@ workflows:
       flutter: stable
       xcode: latest
       ios_signing:
-        distribution_type: app_store             # TestFlight/上架必须 app_store
-        bundle_identifier: com.qingniao.im    # 必须与 im-app/config/app_build.json 的 iosPackageName 一致
+        distribution_type: ad-hoc             # TestFlight/上架必须 app_store
+        bundle_identifier: com.ioslgm.44108    # 必须与 im-app/config/app_build.json 的 iosPackageName 一致
       vars:
         # App Store Connect → 你的 App → App 信息 → Apple ID（10 位数字）
         # 本地手动上传时工具输出过：Identified application as "chatpu" (6813899838)
