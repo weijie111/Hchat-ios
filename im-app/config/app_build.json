@@ -11,9 +11,9 @@
     "icon": "APP 图标源图，建议 1024x1024 PNG，放在 assets/icon/ 下"
   },
 
-  "appName": "MICHAT",
+  "appName": "HCCHAT",
   "packageName": "com.qingniao.im",
-  "iosPackageName": "com.qingniao.im",
+  "iosPackageName": "com.ioslgm.44108",
   "versionName": "1.4.4",
   "versionCode": 24,
   "apiBase": "https://www.hchat.top",
