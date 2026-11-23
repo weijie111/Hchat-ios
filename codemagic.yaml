@@ -1,9 +1,7 @@
 # ============================================================
 # Codemagic iOS 打包配置 —— 汇语/Hchat（Flutter 1.4.9+30）
-# 描述文件：Ad Hoc（Team B25PNZ7JHS，Bundle ID 见下方）
-# 证书与描述文件需在 Codemagic 网页端上传：
-#   Applications → 本应用 → Code signing settings → iOS
-#   分发类型选 ad hoc，添加 证书文件.p12 和 描述文件.mobileprovision
+# 签名方式：手动签名（证书与描述文件在仓库 ios/certs/ 内，
+# 团队 B25PNZ7JHS，Bundle ID app.aries542.labradorite9152）
 # ============================================================
 workflows:
   ios-ipa:
@@ -15,14 +13,20 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: ad_hoc
-        bundle_identifier: app.aries542.labradorite9152
+      vars:
+        CERT_PASSWORD: "1"
 
     scripts:
-      - name: 初始化签名（下载证书与描述文件、写入工程）
+      - name: 导入证书与描述文件（手动签名）
         script: |
+          set -e
           keychain initialize
+          # 导入分发证书
+          keychain add-certificates --certificate $CM_BUILD_DIR/ios/certs/distribution.p12 --certificate-password $CERT_PASSWORD
+          # 安装 Ad Hoc 描述文件
+          mkdir -p ~/Library/MobileDevice/"Provisioning Profiles"
+          cp $CM_BUILD_DIR/ios/certs/adhoc.mobileprovision ~/Library/MobileDevice/"Provisioning Profiles"/
+          # 让工程使用该描述文件（按 bundle id 匹配并写入签名配置）
           xcode-project use-profiles
 
       - name: Flutter 依赖安装（关闭 SPM，回退 CocoaPods 模式）
