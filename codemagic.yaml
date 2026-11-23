@@ -36,7 +36,7 @@ workflows:
 
       - name: 编译并导出 IPA
         script: |
-          flutter build ipa --release --export-method ad-hoc
+          flutter build ipa --release --export-options-plist=$CM_BUILD_DIR/ios/ExportOptions.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
