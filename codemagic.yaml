@@ -39,10 +39,3 @@ workflows:
 
     artifacts:
       - build/ios/ipa/*.ipa
-
-    publishing:
-      # 构建完成后可在 Codemagic Builds 页面直接下载 IPA
-      # 如需邮件通知，取消下行注释并填入邮箱：
-      # email:
-      #   recipients:
-      #     - your@email.com
