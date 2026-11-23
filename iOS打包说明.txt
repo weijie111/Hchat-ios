@@ -1,0 +1,120 @@
+========================================
+Hchat iOS 打包说明
+========================================
+更新时间：2026-11-12
+当前版本：1.4.7+28（pubspec.yaml，与安卓 APK 完全一致）
+Bundle ID：com.qingniao.im
+App 显示名：Hchat（桌面图标下的名字）
+后端地址：https://www.hchat.top（assets/config/app_config.json）
+
+本次更新（2026-11-12）：
+  1. lib/ 源码全量同步到安卓最新 1.4.7+28（本次删除了
+     「我的」页和钱包页的「关于我们 / 关于钱包」入口，
+     关于页文件 about_page.dart 保留但已无任何入口）
+  2. 推送通道：iOS 正式走【个推 Getui】（getuiflut 已集成，
+     Dart 端 PushService 自动初始化，无需在 Mac 上做任何事），
+     只需在总后台「系统配置 → 推送配置」里填好个推四件套并
+     把 iOS 服务商切到「个推 Getui」即可生效（见下方第 3 条）。
+  3. config/app_build.json 与 pubspec.yaml 版本已同步 1.4.7/28。
+
+========================================
+一、本文件夹内容说明
+========================================
+这是从 Flutter 工程里整理出来的【iOS 打包自包含工程】，
+拷到你的 Mac 上即可直接编译 IPA，无需再从服务器拉取。
+
+包含：
+  ios/         —— iOS 原生工程（Runner.xcodeproj / Podfile / Info.plist 等）
+  lib/         —— Dart 业务代码（与安卓 1.4.6+27 逐文件一致）
+  assets/      —— 图标、图片、声音等资源
+  config/      —— app_build.json（打包总配置）
+  packages/    —— 本地插件 tencent_trtc_cloud（腾讯云 TRTC 音视频）
+  pubspec.yaml / pubspec.lock  —— 依赖清单（与安卓同一份 lock）
+
+========================================
+二、在 Mac 上打包 IPA 的步骤
+========================================
+前置：Mac 已装 Xcode + CocoaPods + Flutter SDK
+
+1. 把本文件夹整个拷到 Mac（路径别带中文和空格，比如放 ~/im-app-ios）
+
+2. 进入目录，安装依赖：
+   cd ~/im-app-ios
+   flutter pub get
+
+3. 进入 ios 目录，装 CocoaPods 依赖：
+   cd ios
+   pod install
+   （若报权限/源错误，可先执行 pod repo update）
+
+4. 打开工程（务必用 .xcworkspace，不是 .xcodeproj）：
+   open Runner.xcworkspace
+
+5. 在 Xcode 里配置签名：
+   - 选中 Runner target → Signing & Capabilities
+   - 勾选 "Automatically manage signing"
+   - Team 选择你的 Apple 开发者账号
+   - Bundle Identifier 保持 com.qingniao.im（勿改）
+   - 确认 Capabilities 里有 Push Notifications（工程已带
+     Runner.entitlements 的 aps-environment，正常会自动显示）
+
+6. 选择真机或 "Any iOS Device (arm64)"，菜单 Product → Archive
+
+7. Archive 完成后，在 Organizer 里点 "Distribute App"：
+   - 上架 App Store → App Store Connect
+   - 内测/越狱分发 → Ad Hoc / Enterprise
+   然后导出 .ipa 文件即可。
+
+========================================
+三、注意事项（重要）
+========================================
+1. 【版本号】pubspec.yaml = 1.4.7+28，config/app_build.json =
+   versionName 1.4.7 / versionCode 28，两边已一致。下次发版 +
+   同步改这两处（versionCode 必须 +1）。
+
+2. 【Bundle ID 一致】iOS 签名时，Apple 开发者后台的
+   App ID / ad-hoc 描述文件必须也是 com.qingniao.im，
+   错一个字母都签不上。
+
+3. 【推送 = 个推 Getui（iOS 主通道）+ 极光（备用）】
+   - 2026-11-12 起推送通道确认为【个推 Getui】，整条链路已写好：
+     App 端 PushService 从服务端 /auth/config 拉取个推凭据自动
+     初始化 getuiflut SDK → 上报 cid 并绑定别名（用户 ID）→
+     服务端收到离线消息时按别名经个推 REST v2 下发 APNs。
+   - 你只需要在【总后台 → 系统配置 → 推送配置】里设置：
+       ① iOS 离线推送服务商：选「个推 Getui」
+       ② 个推开关：打开
+       ③ 个推 App ID / App Key / App Secret（iOS SDK 用）
+       ④ 个推 MasterSecret（服务端 REST 鉴权用）
+     这四项都来自【个推开发者控制台】创建的那个 iOS 应用。
+     保存后 App 下次启动即生效，无需改代码、无需重新打包。
+   - 个推控制台建应用时【包名/Bundle ID】都填：com.qingniao.im
+     （安卓包名填 com.qingniao.im；iOS Bundle ID 也是它）。
+   - 极光 jpush_flutter 仍保留在工程里作为备用通道：后台把
+     服务商切回「极光」即可用（需要 assets/config/app_config.json
+     里 jpushAppKey 非空，当前为空，即极光不初始化，不影响个推）。
+   - Info.plist 已配好 remote-notification 后台模式、
+     aps-environment entitlement（Push Notifications 能力）；
+     通知权限弹窗由 SDK 申请。
+   - 桌面角标：打开 App / 未读归零会自动清零（PushService 处理）。
+
+4. 【音视频】腾讯云 TRTC（packages/tencent_trtc_cloud）已包含，
+   pod install 会一并装好。摄像头/麦克风权限已在 Info.plist 声明。
+   后台通话引擎当前是 livekit（wss://www.hchat.top/livekit），
+   livekit_client 2.13.0 与 flutter_webrtc 1.6.2 的 pod 版本已对齐。
+
+5. 【ATS】Info.plist 已全局放行 http（NSAllowsArbitraryLoads=true），
+   方便 ad-hoc 内测分发。上架 App Store 前建议按需收紧为仅 HTTPS。
+
+6. 【图标/启动图】已按安卓最新 Hchat 品牌图重新生成完毕
+   （AppIcon 15 张 + LaunchImage 3 张），无需在 Mac 上再跑
+   flutter_launcher_icons / flutter_native_splash。
+   以后换图标：替换 assets/icon/app_icon.png 与 splash_logo.png
+   后，在 Mac 上执行 dart run flutter_launcher_icons 和
+   dart run flutter_native_splash:create 即可。
+
+========================================
+四、Android(APK) 与 iOS 版本同步约定
+========================================
+以后每次改代码或打 APK 时，iOS 的 lib/、assets/、config/
+会一并同步到这个文件夹，保证两端代码一致。

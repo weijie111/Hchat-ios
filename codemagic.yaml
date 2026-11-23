@@ -1,0 +1,48 @@
+# ============================================================
+# Codemagic iOS 打包配置 —— 汇语/Hchat（Flutter 1.4.9+30）
+# 描述文件：Ad Hoc（Team B25PNZ7JHS，Bundle ID 见下方）
+# 证书与描述文件需在 Codemagic 网页端上传：
+#   Applications → 本应用 → Code signing settings → iOS
+#   分发类型选 ad hoc，添加 证书文件.p12 和 描述文件.mobileprovision
+# ============================================================
+workflows:
+  ios-ipa:
+    name: iOS IPA (Ad Hoc)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: ad_hoc
+        bundle_identifier: app.aries542.labradorite9152
+
+    scripts:
+      - name: 初始化签名（下载证书与描述文件、写入工程）
+        script: |
+          keychain initialize
+          xcode-project use-profiles
+
+      - name: Flutter 依赖安装
+        script: |
+          flutter packages pub get
+
+      - name: CocoaPods 依赖安装
+        script: |
+          cd ios && pod install
+
+      - name: 编译并导出 IPA
+        script: |
+          flutter build ipa --release --export-method ad-hoc
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      # 构建完成后可在 Codemagic Builds 页面直接下载 IPA
+      # 如需邮件通知，取消下行注释并填入邮箱：
+      # email:
+      #   recipients:
+      #     - your@email.com
