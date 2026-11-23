@@ -25,13 +25,10 @@ workflows:
           keychain initialize
           xcode-project use-profiles
 
-      - name: Flutter 依赖安装
+      - name: Flutter 依赖安装（关闭 SPM，回退 CocoaPods 模式）
         script: |
+          flutter config --no-enable-swift-package-manager
           flutter packages pub get
-
-      - name: CocoaPods 依赖安装
-        script: |
-          cd ios && pod install
 
       - name: 编译并导出 IPA
         script: |
